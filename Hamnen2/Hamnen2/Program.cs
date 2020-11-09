@@ -18,23 +18,26 @@ namespace Hamnen2
 
             Hamnen port = new Hamnen();
             int dag = 0;
+            int platsnummer = 1;
 
             while (true)
             {
-                int platsnummer = 1;
 
-                MainWindow(hamnArray, rowboatArray, platsnummer, dag);
+
+                
 
                 Statistik(hamnArray, BåtarUtanPlats, port);
 
-                DagariHamnenMetod(hamnArray, port);
-              
+                MainWindow(hamnArray, rowboatArray, platsnummer, dag);
+
+                DagariHamnenMetod(hamnArray, port, rowboatArray);
+
                 BåtarDagligenMetod(5, inkommandeBåtar);
 
                 Hamnplatser(hamnArray, rowboatArray, inkommandeBåtar, BåtarUtanPlats, port);
-                
 
-                
+
+
                 dag++;
                 Console.WriteLine();
                 Console.WriteLine("Nästa dag, klicka enter");
@@ -47,6 +50,8 @@ namespace Hamnen2
 
         private static void MainWindow(Boat[]array, Boat[]rowb, int plats, int dag)
         {
+            plats = 1;
+
             if (dag == 0)
             {
                 Console.WriteLine("Välkommen till hamnen!");
@@ -59,10 +64,8 @@ namespace Hamnen2
             Console.WriteLine("Plats\tBåttyp\t\tNr\tVikt\tMaxhast\t\tÖvrigt");
 
 
-            Boat[] test = array.Intersect(rowb).ToArray();
+            Boat[] test = array.Distinct().ToArray();
             
-
-
 
             using (StreamWriter sw = new StreamWriter("Memory.txt", true))
             {
@@ -83,13 +86,17 @@ namespace Hamnen2
                         {
                             Console.WriteLine($"{item.Index + 1}.\t{item.BoatType}\t{item.IdentityNumber}\t{item.Weight}\t{item.MaxSpeed} km/h\t\t{item.UniqueProperty}");
                             sw.WriteLine($"{item.Index + 1}.\t{item.BoatType}\t{item.IdentityNumber}\t{item.Weight}\t{item.MaxSpeed} km/h\t\t{item.UniqueProperty}");
-                            //foreach (var row in rowb)
-                            //{
-                            //    if (row != null)
-                            //    Console.WriteLine($"{row.Index + 1}.\t{row.BoatType}\t{row.IdentityNumber}\t{row.Weight}\t{row.MaxSpeed} km/h\t\t{row.UniqueProperty} ");
-
-                            //}
-                            //  Console.WriteLine($"{item.Index + 1}.\t{item.BoatType}\t{item.IdentityNumber}\t{item.Weight}\t{item.MaxSpeed} km/h\t\t{item.UniqueProperty} ");
+                            foreach (var row in rowb)
+                            {
+                                if (row != null)
+                                {
+                                    if (item.Index + 1 == row.Index + 1)
+                                    {
+                                        Console.WriteLine($"{row.Index + 1}.\t{row.BoatType}\t{row.IdentityNumber}\t{row.Weight}\t{row.MaxSpeed} km/h\t\t{row.UniqueProperty} ");
+                                        sw.WriteLine($"{row.Index + 1}.\t{row.BoatType}\t{row.IdentityNumber}\t{row.Weight}\t{row.MaxSpeed} km/h\t\t{row.UniqueProperty} ");
+                                    }
+                                }
+                            }
                             plats++;
                         }
 
@@ -109,7 +116,7 @@ namespace Hamnen2
 
         private static void Statistik(Boat[] array, List<Boat> list, Hamnen h)
         {
-            Console.WriteLine();
+            
             Console.WriteLine($"Antal roddbåtar: {h.AmountOfRowboats}\nAntal motorbåtar: {h.AmountOfMotorboats}\nAntal segelbåtar: {h.AmountOfSailboats}\nAntal lastfartyg: {h.AmountOfCargoboats}");
             Console.WriteLine("Totalvikten är: " + Hamnen.CountWeight(array) + " kg");
             Console.WriteLine("Medelhastigheten är: " + Hamnen.CountVelocity(array) + " km/h");
@@ -120,10 +127,10 @@ namespace Hamnen2
             {
                 Console.WriteLine($"{item.BoatType} med id: {item.IdentityNumber}"); ;
             }
-
+            Console.WriteLine();
         }
 
-        private static void DagariHamnenMetod(Boat[] array, Hamnen h)
+        private static void DagariHamnenMetod(Boat[] array, Hamnen h, Boat[] rowboat)
         {
 
             foreach (var item in array.ToList())
@@ -133,6 +140,7 @@ namespace Hamnen2
                     if (item.DagarIHamnen != 0)
                     {
                         item.DagarIHamnen--;
+
                     }
 
                     else
@@ -140,13 +148,8 @@ namespace Hamnen2
                         //  Console.WriteLine($"Den här båten lämnar hamnen: {it.IdentityNumber}");
                         //   it.Loop = true;
 
-                        if (item is Rowboat)
-                        {
-                            h.AmountOfRowboats--;
-                            array[item.Index] = null;
-                            
-                        }
-                        else if (item is Motorboat)
+                        
+                        if (item is Motorboat)
                         {
                             h.AmountOfMotorboats--;
                             array[item.Index] = null;
@@ -175,6 +178,38 @@ namespace Hamnen2
                         }
 
                     }
+                }
+            }
+
+            foreach (var item in array)
+            {
+                if (item != null)
+                {
+
+                    if (item is Rowboat)
+                    {
+                        if (item.DagarIHamnen == 0)
+                        {
+                            h.AmountOfRowboats--;
+                            array[item.Index] = null;
+                        }
+                    }
+                }
+            }
+
+            foreach (var row in rowboat.ToList())
+            {
+                if (row != null)
+                {
+                    
+                        if (row is Rowboat)
+                        {
+                            row.DagarIHamnen--;
+                            h.AmountOfRowboats--;
+                            rowboat[row.Index] = null;
+
+                        }
+                    
                 }
             }
         }
@@ -208,6 +243,7 @@ namespace Hamnen2
                                     item.Index = j;
                                     inkommandeBåtar.Remove(item);
                                     h.AmountOfRowboats++;
+                                    hamnArray[j].Shared = true;
                                     item.Shared = true;
                                     break;
                                 }
